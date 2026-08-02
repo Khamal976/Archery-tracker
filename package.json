@@ -9,8 +9,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "icons": "node scripts/gen-icons.mjs",
-    "deploy": "wrangler pages deploy dist --project-name kh-arrow-7f3a --branch main --commit-dirty true"
+    "icons": "node scripts/gen-icons.mjs"
   },
   "dependencies": {
     "dexie": "^4.0.11",
@@ -30,7 +29,6 @@
     "typescript": "^5.7.0",
     "vite": "^7.0.0",
     "vite-plugin-pwa": "^1.0.0",
-    "vitest": "^3.0.0",
-    "wrangler": "^4.118.0"
+    "vitest": "^3.0.0"
   }
 }
