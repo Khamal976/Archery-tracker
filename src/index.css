@@ -1,0 +1,155 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+  Цвет. Два правила из практики: чистого белого нет нигде (на солнце слепит),
+  насыщенного голубого тоже (то же самое плюс он сливается с синими кольцами).
+  Тёмная тема тёплая, светлая — светло-серая высококонтрастная.
+*/
+:root,
+.light {
+  --c-bg: #e4dfd8;
+  --c-surface: #d9d3ca;
+  --c-surface-2: #cec7bd;
+  --c-border: #b0a89c;
+  --c-text: #1b1815;
+  --c-muted: #55504a;
+  --c-accent: #8a5a08;
+  --c-accent-soft: #c99a3c;
+  --c-danger: #9c3a20;
+  --c-ok: #3f6b2f;
+  --c-shot: #1b1815;
+  --c-shot-ring: #f2efe9;
+  --c-grid: #a89f92;
+
+  /* Мишень: канонические цвета WA, но приглушённые — белого и яркого голубого нет. */
+  --t-paper: #cdc7bc;
+  --t-gold: #d9bf42;
+  --t-red: #bd4634;
+  --t-blue: #4a7d96;
+  --t-black: #16151b;
+  --t-line: #14131a;
+  --t-line-inv: #ded8cd;
+}
+
+.dark {
+  --c-bg: #12100e;
+  --c-surface: #1d1a17;
+  --c-surface-2: #2a2622;
+  --c-border: #3d3832;
+  --c-text: #ece7e0;
+  --c-muted: #9c948a;
+  --c-accent: #e0a63c;
+  --c-accent-soft: #8a6a2c;
+  --c-danger: #d4674a;
+  --c-ok: #7fa860;
+  --c-shot: #f2efe9;
+  --c-shot-ring: #12100e;
+  --c-grid: #4a443c;
+
+  --t-paper: #8b857b;
+  --t-gold: #c2a537;
+  --t-red: #a03d2d;
+  --t-blue: #3d687c;
+  --t-black: #131218;
+  --t-line: #0e0d11;
+  --t-line-inv: #c6c0b6;
+}
+
+@theme inline {
+  --color-bg: var(--c-bg);
+  --color-surface: var(--c-surface);
+  --color-surface2: var(--c-surface-2);
+  --color-line: var(--c-border);
+  --color-ink: var(--c-text);
+  --color-muted: var(--c-muted);
+  --color-accent: var(--c-accent);
+  --color-accentsoft: var(--c-accent-soft);
+  --color-danger: var(--c-danger);
+  --color-ok: var(--c-ok);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--c-bg);
+  color: var(--c-text);
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+  touch-action: manipulation;
+}
+
+/* Тап-зоны не меньше 44 px: ввод идёт стоя и в перчатке. */
+@utility tap {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+@utility card {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: 0.75rem;
+}
+
+@utility num {
+  font-variant-numeric: tabular-nums;
+}
+
+.safe-bottom {
+  padding-bottom: max(env(safe-area-inset-bottom), 0.5rem);
+}
+
+.safe-top {
+  padding-top: max(env(safe-area-inset-top), 0rem);
+}
+
+/* Мишень: жесты браузера не должны конкурировать с вводом стрел. */
+.target-svg {
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+input,
+select,
+textarea {
+  background: var(--c-surface-2);
+  color: var(--c-text);
+  border: 1px solid var(--c-border);
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.625rem;
+  min-height: 44px;
+  width: 100%;
+}
+
+input[type='checkbox'] {
+  min-height: 0;
+  width: auto;
+  accent-color: var(--c-accent);
+}
+
+select {
+  appearance: none;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--c-border);
+  border-radius: 6px;
+}

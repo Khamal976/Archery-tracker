@@ -1,0 +1,18 @@
+# Правила для Cloudflare Pages.
+# Сервис-воркер, входная страница и манифест не должны кэшироваться на CDN:
+# иначе новая версия приложения не долетит до телефона, пока не протухнет кэш.
+/sw.js
+  Cache-Control: no-cache, must-revalidate
+
+/index.html
+  Cache-Control: no-cache, must-revalidate
+
+/manifest.webmanifest
+  Cache-Control: no-cache, must-revalidate
+
+# У сборочных ассетов в имени хэш содержимого — их можно держать вечно.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/tuning/*
+  Cache-Control: public, max-age=604800
