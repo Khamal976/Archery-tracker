@@ -5,6 +5,7 @@ import type { ThemeName } from './core/types'
 import { IconChart, IconGear, IconTarget, IconTune } from './ui/icons'
 import { ThemeToggle } from './ui/ThemeToggle'
 import { FacesScreen } from './screens/FacesScreen'
+import { FeedbackScreen } from './screens/FeedbackScreen'
 import { HomeScreen } from './screens/HomeScreen'
 import { NewSessionScreen } from './screens/NewSessionScreen'
 import { SettingsScreen } from './screens/SettingsScreen'
@@ -90,6 +91,7 @@ export function App() {
   else if (seg[0] === 'setups') screen = <SetupsScreen />
   else if (seg[0] === 'faces') screen = <FacesScreen />
   else if (seg[0] === 'tuning') screen = <TuningScreen sectionId={seg[1]} />
+  else if (seg[0] === 'feedback') screen = <FeedbackScreen />
   else if (seg[0] === 'settings') screen = <SettingsScreen />
 
   return (

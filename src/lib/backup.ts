@@ -1,6 +1,7 @@
 import { db } from '../db/db'
 import type {
   End,
+  Feedback,
   Session,
   Settings,
   Setup,
@@ -24,6 +25,7 @@ export interface BackupFile {
   stages: Stage[]
   ends: End[]
   shots: Shot[]
+  feedback: Feedback[]
   settings: Settings | null
 }
 
@@ -72,16 +74,18 @@ export function mergeRows<T extends Identified>(
 }
 
 export async function buildBackup(): Promise<BackupFile> {
-  const [faces, setups, setupVersions, sessions, stages, ends, shots, settings] = await Promise.all([
-    db.faces.toArray(),
-    db.setups.toArray(),
-    db.setupVersions.toArray(),
-    db.sessions.toArray(),
-    db.stages.toArray(),
-    db.ends.toArray(),
-    db.shots.toArray(),
-    db.settings.get('settings'),
-  ])
+  const [faces, setups, setupVersions, sessions, stages, ends, shots, feedback, settings] =
+    await Promise.all([
+      db.faces.toArray(),
+      db.setups.toArray(),
+      db.setupVersions.toArray(),
+      db.sessions.toArray(),
+      db.stages.toArray(),
+      db.ends.toArray(),
+      db.shots.toArray(),
+      db.feedback.toArray(),
+      db.settings.get('settings'),
+    ])
   return {
     app: BACKUP_APP,
     version: BACKUP_VERSION,
@@ -93,6 +97,7 @@ export async function buildBackup(): Promise<BackupFile> {
     stages,
     ends,
     shots,
+    feedback,
     settings: settings ?? null,
   }
 }
@@ -114,6 +119,7 @@ export function parseBackup(text: string): BackupFile {
     stages: data.stages ?? [],
     ends: data.ends ?? [],
     shots: data.shots ?? [],
+    feedback: data.feedback ?? [],
     settings: data.settings ?? null,
   }
 }
@@ -138,6 +144,7 @@ export async function applyBackup(file: BackupFile): Promise<MergeReport> {
   await step('Этапы', db.stages, file.stages)
   await step('Серии', db.ends, file.ends)
   await step('Выстрелы', db.shots, file.shots)
+  await step('Обратная связь', db.feedback, file.feedback)
 
   if (file.settings) {
     const local = await db.settings.get('settings')

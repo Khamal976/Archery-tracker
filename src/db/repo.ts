@@ -3,6 +3,8 @@ import type { ShootingFormat } from '../core/formats'
 import type {
   BowType,
   End,
+  Feedback,
+  FeedbackKind,
   InputMode,
   Place,
   Session,
@@ -397,6 +399,45 @@ export async function undoLastShot(endId: string): Promise<void> {
   if (shots.length === 0) return
   const last = shots.reduce((a, b) => (a.index >= b.index ? a : b))
   await deleteShot(last.id)
+}
+
+// ------------------------------------------------------------------ обратная связь
+
+export async function listFeedback(): Promise<Feedback[]> {
+  return alive(await db.feedback.toArray()).sort((a, b) => b.createdAt - a.createdAt)
+}
+
+export async function addFeedback(
+  kind: FeedbackKind,
+  text: string,
+  context: string,
+): Promise<Feedback> {
+  const t = now()
+  const row: Feedback = {
+    id: newId(),
+    kind,
+    text: text.trim(),
+    context: context.trim(),
+    status: 'open',
+    createdAt: t,
+    updatedAt: t,
+    deletedAt: null,
+  }
+  await db.feedback.add(row)
+  return row
+}
+
+export async function patchFeedback(id: string, patch: Partial<Feedback>): Promise<void> {
+  const row = await db.feedback.get(id)
+  if (!row) return
+  await db.feedback.put({ ...row, ...patch, updatedAt: now() })
+}
+
+export async function deleteFeedback(id: string): Promise<void> {
+  const row = await db.feedback.get(id)
+  if (!row) return
+  const t = now()
+  await db.feedback.put({ ...row, deletedAt: t, updatedAt: t })
 }
 
 // ------------------------------------------------------------------ чтение

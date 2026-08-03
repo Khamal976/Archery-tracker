@@ -190,6 +190,28 @@ export interface Shot {
   deletedAt: number | null
 }
 
+// ---------------------------------------------------------------- обратная связь
+
+export type FeedbackKind = 'bug' | 'idea' | 'note'
+export type FeedbackStatus = 'open' | 'done'
+
+/**
+ * Заметка о самом приложении: что сломалось, чего не хватает, что мешает.
+ * Пишется офлайн и хранится рядом с остальными данными, поэтому попадает
+ * в бэкап и переезжает между устройствами вместе с тренировками.
+ */
+export interface Feedback {
+  id: string
+  kind: FeedbackKind
+  text: string
+  status: FeedbackStatus
+  /** Где это случилось: экран или сценарий, если пользователь указал. */
+  context: string
+  createdAt: number
+  updatedAt: number
+  deletedAt: number | null
+}
+
 // ---------------------------------------------------------------- настройки
 
 export type ThemeName = 'dark' | 'light'

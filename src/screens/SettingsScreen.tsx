@@ -132,6 +132,18 @@ export function SettingsScreen() {
         </div>
       </Card>
 
+      <Card title="Обратная связь">
+        <div className="grid gap-2">
+          <p className="text-sm text-muted">
+            Нашёл ошибку или чего-то не хватает — запиши прямо здесь. Работает офлайн, письмо
+            соберётся само.
+          </p>
+          <Button variant="ghost" onClick={() => navigate('/feedback')}>
+            Написать об ошибке или идее
+          </Button>
+        </div>
+      </Card>
+
       <Card title="Перенос между устройствами" className="lg:col-span-2">
         <div className="grid gap-3">
           <Note>

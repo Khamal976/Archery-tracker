@@ -8,6 +8,11 @@ const base = process.env.BASE_PATH ?? '/'
 
 export default defineConfig({
   base,
+  // Версия из package.json — уезжает в письмо обратной связи, чтобы было понятно,
+  // на какой сборке случилась ошибка.
+  define: {
+    __APP_VERSION__: JSON.stringify(process.env.npm_package_version ?? 'dev'),
+  },
   plugins: [
     react(),
     tailwindcss(),

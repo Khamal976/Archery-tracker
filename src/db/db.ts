@@ -2,6 +2,7 @@ import Dexie, { type Table } from 'dexie'
 import { BUILTIN_FACES } from '../core/faces'
 import type {
   End,
+  Feedback,
   Session,
   Settings,
   Setup,
@@ -31,6 +32,7 @@ export class ArcheryDb extends Dexie {
   stages!: Table<Stage, string>
   ends!: Table<End, string>
   shots!: Table<Shot, string>
+  feedback!: Table<Feedback, string>
   settings!: Table<Settings, string>
 
   constructor() {
@@ -44,6 +46,11 @@ export class ArcheryDb extends Dexie {
       ends: 'id, sessionId, stageId, index, updatedAt',
       shots: 'id, sessionId, stageId, endId, updatedAt',
       settings: 'id',
+    })
+
+    // Версия 2 добавляет только новую таблицу — накопленные тренировки не трогаются.
+    this.version(2).stores({
+      feedback: 'id, status, createdAt, updatedAt',
     })
 
     this.on('populate', async () => {
