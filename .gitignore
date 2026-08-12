@@ -8,3 +8,6 @@ dev-dist
 coverage
 *.tsbuildinfo
 .wrangler
+
+# Отчёт скрейпера ритейлера: что взято и что пропущено, пересоздаётся при запуске
+retail-report.txt

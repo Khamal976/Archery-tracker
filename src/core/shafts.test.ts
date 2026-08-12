@@ -19,9 +19,10 @@ const groups = (rows: Shaft[]): Map<string, Shaft[]> => {
 }
 
 describe('состав справочника', () => {
-  it('оба источника на месте', () => {
+  it('все три источника на месте', () => {
     expect(bySource('stu').length).toBeGreaterThan(400)
     expect(bySource('skylon').length).toBeGreaterThan(100)
+    expect(bySource('retail').length).toBeGreaterThan(20)
   })
 
   it('у каждой записи известен источник со ссылкой', () => {
@@ -62,7 +63,45 @@ describe('значения в физически осмысленных пред
   })
 })
 
-describe('Skylon: разбор страниц не поехал', () => {
+describe('собранное скрейпингом: разбор страниц не поехал', () => {
+  it.each(['skylon', 'retail'] as const)(
+    '%s — внутри серии более жёсткий спайн означает большие GPI и диаметр',
+    (source) => {
+      const problems: string[] = []
+      for (const [name, rows] of groups(bySource(source))) {
+        const sorted = [...rows].sort((a, b) => b.deflection - a.deflection)
+        for (let i = 1; i < sorted.length; i++) {
+          if (sorted[i].gpi < sorted[i - 1].gpi) {
+            problems.push(`${name}: GPI падает ${sorted[i - 1].gpi} → ${sorted[i].gpi}`)
+          }
+          if (sorted[i].od < sorted[i - 1].od) {
+            problems.push(`${name}: диаметр падает ${sorted[i - 1].od} → ${sorted[i].od}`)
+          }
+        }
+      }
+      expect(problems).toEqual([])
+    },
+  )
+
+  it('внутри одной серии нет двух строк с одинаковыми числами', () => {
+    // Именно внутри серии: между сериями совпадение — норма, а не ошибка.
+    // У Skylon Brixxon, Novice и Radius это физически одна трубка id 4.2,
+    // отличаются допуском на прямизну и графикой. Схлопывать их нельзя:
+    // человек ищет древко по тому имени, что написано на трубке.
+    const dupes: string[] = []
+    for (const [name, rows] of groups(ALL_SHAFTS.filter((x) => x.source !== 'stu'))) {
+      const seen = new Set<string>()
+      for (const s of rows) {
+        const key = `${s.deflection}|${s.gpi}|${s.od}`
+        if (seen.has(key)) dupes.push(`${name} ${s.size}`)
+        seen.add(key)
+      }
+    }
+    expect(dupes).toEqual([])
+  })
+})
+
+describe('Skylon: серии по внутреннему диаметру', () => {
   it('внутри серии более жёсткий спайн означает большие GPI и диаметр', () => {
     const problems: string[] = []
     for (const [name, rows] of groups(bySource('skylon'))) {

@@ -91,6 +91,10 @@ def fixup_shaft(item: dict) -> dict | None:
       значения из последнего расчёта владельца файла. Дерево считаем через WOODS.
     - AC Injexion — это Easton, у Стю в колонке производителя оказался материал.
     - «Unknown / Generic» — обобщённый карбон, читается как «Generic / Carbon».
+    - У Стю производитель разделён по материалу: Easton_Aluminum, Easton_Carbon,
+      Easton_Hybrid. Материал в форме выбирается отдельным полем и так, поэтому
+      суффикс лишний, а рядом с записями из других источников он даёт четыре
+      разных «Easton» в одном списке.
     """
     if item['brand'] == 'Wood Shaft':
         return None
@@ -100,6 +104,8 @@ def fixup_shaft(item: dict) -> dict | None:
     if item['brand'] == 'Unknown' and item['series'] == 'Generic':
         item['brand'] = 'Generic'
         item['series'] = 'Carbon'
+    if item['brand'] in ('Easton Aluminum', 'Easton Carbon', 'Easton Hybrid'):
+        item['brand'] = 'Easton'
     return item
 
 

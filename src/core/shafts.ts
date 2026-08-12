@@ -9,9 +9,10 @@
  */
 
 import { SHAFTS, type ShaftSpec } from './spineData'
+import { RETAIL_SHAFTS } from './spineDataRetail'
 import { SKYLON_SHAFTS } from './spineDataSkylon'
 
-export type ShaftSource = 'stu' | 'skylon'
+export type ShaftSource = 'stu' | 'skylon' | 'retail'
 
 export interface Shaft extends ShaftSpec {
   source: ShaftSource
@@ -26,9 +27,17 @@ export const SHAFT_SOURCES: Record<ShaftSource, { label: string; url: string }> 
     label: 'Skylon Archery, сайт производителя',
     url: 'https://www.skylonarchery.com/',
   },
+  retail: {
+    label: 'Lancaster Archery Supply, карточка товара',
+    url: 'https://lancasterarchery.com/',
+  },
 }
 
 const tag = (rows: ShaftSpec[], source: ShaftSource): Shaft[] =>
   rows.map((r) => ({ ...r, source }))
 
-export const ALL_SHAFTS: Shaft[] = [...tag(SHAFTS, 'stu'), ...tag(SKYLON_SHAFTS, 'skylon')]
+export const ALL_SHAFTS: Shaft[] = [
+  ...tag(SHAFTS, 'stu'),
+  ...tag(SKYLON_SHAFTS, 'skylon'),
+  ...tag(RETAIL_SHAFTS, 'retail'),
+]
