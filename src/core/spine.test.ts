@@ -28,6 +28,7 @@ const XX75_1916 = {
 
 const arrow = (patch: Partial<ArrowInput> = {}): ArrowInput => ({
   ...XX75_1916,
+  focCompPct: 0,
   bop: 30,
   pointGrains: 90,
   insertGrains: 0,

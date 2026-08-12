@@ -103,9 +103,16 @@ def fixup_shaft(item: dict) -> dict | None:
     return item
 
 
+# Именованный диапазон ArrowDB в книге — AF189:AR666. Ниже 666 лежат списки
+# выпадающих меню, где в тех же колонках снова встречаются названия материалов,
+# поэтому границу держим жёстко, а не «до конца листа».
+ARROW_DB = (189, 666)
+BOW_DB = (189, 463)
+
+
 def read_shafts(sh: Sheet, nrows: int):
     out, skipped = [], 0
-    for row in range(189, nrows + 1):
+    for row in range(ARROW_DB[0], ARROW_DB[1] + 1):
         material = sh.text(row, 'AB')
         if material not in MATERIALS:
             continue
@@ -119,6 +126,9 @@ def read_shafts(sh: Sheet, nrows: int):
         series = sh.text(row, 'AD')
         size = sh.text(row, 'AE')
         insert_grains = sh.num(row, 'AP', 0.0, 300.0)
+        # Бочкообразные и front-loaded древки жёстче у передка: автор помечает их
+        # процентом, который потом снимается со статического спайна.
+        foc_comp = sh.num(row, 'AJ', 0.0, 20.0) or 0.0
         item = fixup_shaft(
             {
                 'material': MATERIALS[material],
@@ -128,6 +138,7 @@ def read_shafts(sh: Sheet, nrows: int):
                 'deflection': r(deflection),
                 'gpi': r(gpi, 3),
                 'od': r(od),
+                'focComp': r(foc_comp, 2),
                 'stockLength': sh.num(row, 'AN', 20.0, 40.0),
                 'insert': sh.text(row, 'AO'),
                 'insertGrains': r(insert_grains, 1),
@@ -141,7 +152,7 @@ def read_shafts(sh: Sheet, nrows: int):
 
 def read_bows(sh: Sheet, nrows: int):
     out = []
-    for row in range(189, nrows + 1):
+    for row in range(BOW_DB[0], BOW_DB[1] + 1):
         name = sh.text(row, 'BB')
         efficiency = sh.num(row, 'BC', 0.5, 1.5)
         if not name or efficiency is None:
@@ -253,6 +264,12 @@ export interface ShaftSpec {
   gpi: number
   /** Наружный диаметр, дюймы. */
   od: number
+  /**
+   * Поправка на бочкообразность, проценты. Ненулевая у древков с переменным
+   * сечением (Maxima, Hammerhead): у них передок жёстче, и автор снимает
+   * этот процент со статического спайна. У обычных параллельных трубок 0.
+   */
+  focComp: number
   /** Заводская длина некроя, дюймы; null — производитель не указал. */
   stockLength: number | null
   /** Рекомендованная вставка и её вес — справочно, в расчёт не идёт. */

@@ -7,8 +7,13 @@
  * на машине, вывода из физики у них нет — поэтому переписаны как есть, без «улучшений».
  *
  * Смысл модели: статический спайн трубки пересчитывается в динамический с поправками
- * на длину, вес переднего конца, массу и диаметр; лук отдельно даёт требуемое число.
- * Совпали в пределах допуска — стрела подобрана.
+ * на длину, вес переднего конца, массу, диаметр и бочкообразность; лук отдельно даёт
+ * требуемое число. Совпали в пределах допуска — стрела подобрана.
+ *
+ * Формулы взяты не на глаз: их текст вытащен из книги Excel как есть. Восстанавливать
+ * их подгонкой по значениям нельзя — на исходном сетапе множитель по GPI совпадает
+ * сразу у нескольких разных формул, и ошибка вылезает только на краях диапазона.
+ * Сверка живёт в spineReference.test.ts, десять точек посчитаны самим Excel.
  *
  * ГРАНИЦЫ ПРИМЕНИМОСТИ. Модель откалибрована на традиционных луках с пальцевым отпуском
  * и на древках диаметром 4.8–10.7 мм. Для тонких таргетных трубок (3.2–4.2 мм) поправка
@@ -33,6 +38,11 @@ export interface ArrowInput {
   gpi: number
   /** Наружный диаметр, дюймы. */
   od: number
+  /**
+   * Поправка на бочкообразность, проценты: у древков с переменным сечением
+   * передок жёстче. У параллельных трубок 0.
+   */
+  focCompPct: number
   /** Длина BOP: от дна прорези хвостовика до задней кромки наконечника, дюймы. */
   bop: number
   pointGrains: number
@@ -79,6 +89,7 @@ export interface ArrowResult {
     base: number
     diameter: number
     mass: number
+    focComp: number
     gpiFactor: number
   }
 }
@@ -178,21 +189,24 @@ export function computeArrow(a: ArrowInput): ArrowResult {
   const denominator = deflection26 * lengthFactor * massFactor
   const base = denominator > 0 ? 26 / denominator : 0
 
+  const amoStaticSpine = deflection26 > 0 ? 26 / deflection26 : 0
   const diameter = (a.od - REFERENCE_OD) * 30
   const mass = (base * 9.5 - weight) * 0.025
-  const gpiFactor = 1 + 0.28 * (a.gpi - 10)
+  const focComp = (a.focCompPct / 100) * amoStaticSpine
+  // Лёгкая трубка при равном спайне работает жёстче — отсюда множитель от GPI.
+  const gpiFactor = 1 + (11 - a.gpi) / 100
 
   // Точка баланса: наконечник и вставка сидят на нуле, поэтому в числитель не входят.
   const moment = (a.gpi * a.bop * a.bop) / 2 + a.fletchGrains * (a.bop - 2.5) + a.nockGrains * a.bop
-  const balancePoint = weight > 0 ? moment / weight : 0
+  const balancePoint = weight > 0 ? (moment / weight) * (1 - focComp / 100) : 0
 
   return {
-    dynamicSpine: (base + diameter + mass) * gpiFactor,
-    amoStaticSpine: deflection26 > 0 ? 26 / deflection26 : 0,
+    dynamicSpine: (base + diameter + mass - focComp) * gpiFactor,
+    amoStaticSpine,
     totalWeight: weight,
     balancePoint,
     foc: a.bop > 0 ? ((a.bop / 2 - balancePoint) / a.bop) * 100 : 0,
-    parts: { base, diameter, mass, gpiFactor },
+    parts: { base, diameter, mass, focComp, gpiFactor },
   }
 }
 
@@ -232,15 +246,21 @@ export function computeBow(b: BowInput): BowResult {
   }
 }
 
-/** Начальная скорость, футы в секунду. Заявленная автором точность — ±2 fps. */
+/**
+ * Начальная скорость, футы в секунду. Заявленная автором точность — ±2 fps.
+ * Логарифм от отношения веса стрелы к запасённой энергии, плюс поправки
+ * на растяжку и на глубину выреза полки. Подгонка под отстрел на машине.
+ */
 export function computeSpeed(a: ArrowResult, b: BowInput): number | null {
   const weightAtDraw = weightAtDrawForSpeed(b)
   if (weightAtDraw === null) return null
   const stored = b.efficiency * weightAtDraw * (b.stringFactor - 0.05)
   if (stored <= 0) return null
-  const ratio = a.totalWeight / stored
-  if (ratio <= 1) return null
-  const speed = 200 / log10(ratio) - 20
+  const lg = log10(a.totalWeight / stored + 4) - 0.15
+  if (lg <= 0) return null
+  const speed =
+    ((200 / lg) * (1 - (29 - b.drawLength) * 0.02) - 23) *
+    (1 - (b.strikePosition - 0.063) / 6)
   return speed > 0 ? speed : null
 }
 

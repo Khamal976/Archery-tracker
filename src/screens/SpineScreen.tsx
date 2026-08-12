@@ -7,11 +7,11 @@ import {
   type ArrowInput,
   type BowInput,
 } from '../core/spine'
+import { ALL_SHAFTS, SHAFT_SOURCES } from '../core/shafts'
 import {
   BOWS,
   FLETCHINGS,
   NOCKS,
-  SHAFTS,
   STRINGS,
   WOODS,
   type ShaftSpec,
@@ -80,14 +80,14 @@ const DEFAULT_DRAFT: Draft = {
   material: 'carbon',
   shaftBrand: 'Easton Carbon',
   shaftSeries: 'Axis Traditional',
-  shaftSize: '500',
+  shaftSize: '600',
   manualDeflection: '',
   manualSpineLb: '',
   manualGpi: '',
   manualOd: '',
   woodSpecies: '',
 
-  bop: '28.5',
+  bop: '30',
   point: '100',
   insert: '0',
   nock: '10',
@@ -200,14 +200,14 @@ export function SpineScreen() {
   const manual = draft.material === 'manual'
 
   const shaftBrands = useMemo(
-    () => uniq(SHAFTS.filter((s) => s.material === draft.material).map((s) => s.brand)),
+    () => uniq(ALL_SHAFTS.filter((s) => s.material === draft.material).map((s) => s.brand)),
     [draft.material],
   )
 
   const shaftSeries = useMemo(
     () =>
       uniq(
-        SHAFTS.filter((s) => s.material === draft.material && s.brand === draft.shaftBrand).map(
+        ALL_SHAFTS.filter((s) => s.material === draft.material && s.brand === draft.shaftBrand).map(
           (s) => s.series,
         ),
       ),
@@ -216,7 +216,7 @@ export function SpineScreen() {
 
   const shaftSizes = useMemo(
     () =>
-      SHAFTS.filter(
+      ALL_SHAFTS.filter(
         (s) =>
           s.material === draft.material &&
           s.brand === draft.shaftBrand &&
@@ -264,6 +264,8 @@ export function SpineScreen() {
       deflection,
       gpi,
       od,
+      // Бочкообразность известна только для древков из справочника.
+      focCompPct: manual ? 0 : (shaft?.focComp ?? 0),
       bop: num(draft.bop),
       pointGrains: num(draft.point),
       insertGrains: num(draft.insert),
@@ -627,11 +629,18 @@ export function SpineScreen() {
         </div>
 
         {!manual && shaft && (
-          <p className="num mt-2 text-xs text-muted">
-            Прогиб {shaft.deflection}″ · GPI {shaft.gpi} · диаметр {shaft.od}″
-            {shaft.stockLength ? ` · заводская длина ${shaft.stockLength}″` : ''}
-            {shaft.insertGrains ? ` · вставка ${shaft.insert} ${shaft.insertGrains} гран` : ''}
-          </p>
+          <>
+            <p className="num mt-2 text-xs text-muted">
+              Прогиб {shaft.deflection}″ · GPI {shaft.gpi} · диаметр {shaft.od}″
+              {` (${(shaft.od * 25.4).toFixed(2)} мм)`}
+              {shaft.stockLength ? ` · заводская длина ${shaft.stockLength}″` : ''}
+              {shaft.insertGrains ? ` · вставка ${shaft.insert} ${shaft.insertGrains} гран` : ''}
+            </p>
+            {/* Источник у записи разный, и от него зависит, насколько свежие цифры. */}
+            <p className="mt-1 text-xs text-muted/80">
+              Данные: {SHAFT_SOURCES[shaft.source].label}
+            </p>
+          </>
         )}
       </Card>
 
