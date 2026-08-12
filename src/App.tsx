@@ -21,6 +21,10 @@ const SessionReportScreen = lazy(() =>
 const StatsScreen = lazy(() =>
   import('./screens/StatsScreen').then((m) => ({ default: m.StatsScreen })),
 )
+// Справочник древков и луков весит больше самого экрана — грузим вместе с ним.
+const SpineScreen = lazy(() =>
+  import('./screens/SpineScreen').then((m) => ({ default: m.SpineScreen })),
+)
 
 const NAV = [
   { path: '/', label: 'Сессии', Icon: IconTarget },
@@ -91,6 +95,7 @@ export function App() {
   else if (seg[0] === 'setups') screen = <SetupsScreen />
   else if (seg[0] === 'faces') screen = <FacesScreen />
   else if (seg[0] === 'tuning') screen = <TuningScreen sectionId={seg[1]} />
+  else if (seg[0] === 'spine') screen = <SpineScreen />
   else if (seg[0] === 'feedback') screen = <FeedbackScreen />
   else if (seg[0] === 'settings') screen = <SettingsScreen />
 

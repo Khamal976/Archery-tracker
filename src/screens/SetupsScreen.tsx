@@ -34,6 +34,18 @@ export function SetupsScreen() {
         </div>
       </Card>
 
+      <Card title="Подбор стрелы">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="min-w-0 text-sm text-muted">
+            Динамический спайн: что нужно луку и что получается у стрелы с этой длиной,
+            наконечником и оперением.
+          </p>
+          <Button variant="ghost" onClick={() => navigate('/spine')}>
+            Открыть калькулятор
+          </Button>
+        </div>
+      </Card>
+
       <Card
         title="Сетапы снаряжения"
         action={
