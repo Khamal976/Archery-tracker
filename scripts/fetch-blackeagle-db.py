@@ -244,7 +244,10 @@ def main():
         if i % 25 == 0:
             print(f'  ...{i}/{len(urls)}, серий {len(taken)}')
 
-    shafts = collapse(shafts)
+    # Порядок строк — свой, а не тот, в котором карта сайта отдала страницы:
+    # иначе один и тот же каталог даёт разные файлы от прогона к прогону,
+    # и в diff'е пересборки не видно, что реально изменилось.
+    shafts = sorted(collapse(shafts), key=lambda s: (s['series'], s['deflection']))
     body = ',\n'.join('  ' + json.dumps(s, ensure_ascii=False, separators=(', ', ': '))
                       for s in shafts)
     out = Path('src/core/spineDataBlackEagle.ts')
