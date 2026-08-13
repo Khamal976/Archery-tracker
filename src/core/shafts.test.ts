@@ -19,10 +19,11 @@ const groups = (rows: Shaft[]): Map<string, Shaft[]> => {
 }
 
 describe('состав справочника', () => {
-  it('все три источника на месте', () => {
+  it('все четыре источника на месте', () => {
     expect(bySource('stu').length).toBeGreaterThan(400)
     expect(bySource('skylon').length).toBeGreaterThan(100)
     expect(bySource('retail').length).toBeGreaterThan(300)
+    expect(bySource('blackEagle').length).toBeGreaterThan(70)
   })
 
   it('у каждой записи известен источник со ссылкой', () => {
@@ -62,7 +63,7 @@ describe('значения в физически осмысленных пред
   it('спайн сходится с диаметром и весом трубки', () => {
     // У тонкостенной трубы жёсткость на изгиб растёт как D³·стенка, а вес на
     // дюйм — как D·стенка, поэтому произведение «прогиб × D² × GPI» почти не
-    // зависит от модели. По всем 1025 записям справочника оно держится внутри
+    // зависит от модели. По всем 1097 записям справочника оно держится внутри
     // 0.10…0.90; выход за коридор означает не экзотическое древко, а неверно
     // прочитанную колонку — коды алюминиевых трубок дают 2.9…4.2,
     // миллиметры вместо дюймов — за сотню.
@@ -113,6 +114,30 @@ describe('собранное скрейпингом: разбор страниц
     // источник вдруг начал давать процент, предупреждение стало бы враньём.
     const bad = bySource('retail').filter((s) => s.barreled && s.focComp !== 0)
     expect(bad.map((s) => `${s.series} ${s.size}`)).toEqual([])
+  })
+
+  it('одна серия под двумя именами сведена к имени ближайшего к заводу источника', () => {
+    // У Стю древко зовётся «Rampage», у завода — «Rampage .204»; у ритейлера
+    // «PS25 Dan McCarthy Premium Signature Series», у завода просто «PS25».
+    // Числа на общих размерах совпадают до знака, значит это одно древко,
+    // и в списке оно должно быть одной строкой.
+    const names = new Set(ALL_SHAFTS.filter((s) => s.brand === 'Black Eagle').map((s) => s.series))
+    expect(names.has('Rampage .204')).toBe(true)
+    expect(names.has('Rampage')).toBe(false)
+    expect(names.has('PS25')).toBe(true)
+    expect(names.has('PS25 Dan McCarthy Premium Signature Series')).toBe(false)
+    // Размеры обеих записей на месте: у завода их больше, чем было у Стю.
+    const rampage = ALL_SHAFTS.filter((s) => s.series === 'Rampage .204')
+    expect(rampage.map((s) => s.size).sort()).toEqual(['150', '200', '250', '300', '350', '400'])
+  })
+
+  it('серии одного источника не слипаются, даже если числа совпадают', () => {
+    // Gold Tip Hunter, Hunter XT и Hunter Pro — физически одна трубка разных
+    // допусков, имена в отношении «начало», но древко ищут по имени на трубке.
+    const names = new Set(ALL_SHAFTS.map((s) => s.series))
+    for (const name of ['Hunter', 'Hunter XT', 'Hunter Pro']) {
+      expect(names.has(name)).toBe(true)
+    }
   })
 
   it('внутри одной серии нет двух строк с одинаковыми числами', () => {

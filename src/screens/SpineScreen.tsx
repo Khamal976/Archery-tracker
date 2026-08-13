@@ -221,7 +221,11 @@ export function SpineScreen() {
           s.material === draft.material &&
           s.brand === draft.shaftBrand &&
           s.series === draft.shaftSeries,
-      ),
+      )
+        // От жёсткого к слабому — так напечатано в любой заводской таблице.
+        // Порядок исходного файла тут не годится: серия, собранная из двух
+        // источников, идёт вперемешку (300, 350, 400, 150, 200, 250).
+        .sort((a, b) => a.deflection - b.deflection),
     [draft.material, draft.shaftBrand, draft.shaftSeries],
   )
 
