@@ -365,7 +365,44 @@ def sane(rows: list[dict]) -> list[str]:
     return problems
 
 
-def material_of(title: str, brand: str, rows: list[dict]) -> str:
+# Переменное сечение производитель называет словами, а процент не печатает.
+# Слово ловим, число не выдумываем: в расчёте поправка остаётся нулевой,
+# а экран подбора предупреждает, что у результата известная сторона ошибки.
+#
+# Фразы именно про трубку. Просто «taper» не годится: у Victory так называется
+# вставка («Taper Lock Aluminum Insert»), у XX75 Tribute — обжим под хвостовик
+# («Precision-ground nock swage»), и обе трубки при этом параллельные.
+BARRELED = re.compile(r'barrel+ed|tapered design|rear[- ]tapered|stiffer ends', re.I)
+
+
+def barreled_by(title: str, lines: list[str]) -> bool:
+    return bool(BARRELED.search(title) or any(BARRELED.search(l) for l in lines))
+
+
+CONSTRUCTION = re.compile(r'^Construction:\s*(.{0,80})', re.I)
+METAL = re.compile(r'alloy|aluminum|\b7\d{3}\b|metal jacket', re.I)
+
+
+def material_of(title: str, brand: str, rows: list[dict], lines: list[str]) -> str:
+    """Материал трубки.
+
+    В первую очередь по строке «Construction:» с самой страницы — она честнее
+    названия. У X10 там «carbon fiber/7075 precision alloy», то есть гибрид,
+    хотя по имени его не отличить от карбона; у RX-7 — «7178 Aluminum», хотя
+    имя не намекает на металл вовсе. Заодно это сходится с базой Стю, где X10
+    записан гибридом.
+    """
+    for line in lines:
+        m = CONSTRUCTION.match(line)
+        if not m:
+            continue
+        metal, carbon = bool(METAL.search(m.group(1))), bool(re.search(r'carbon', m.group(1), re.I))
+        if metal and carbon:
+            return 'hybrid'
+        if metal:
+            return 'aluminum'
+        if carbon:
+            return 'carbon'
     low = f'{title} {brand}'.lower()
     if 'fmj' in low or 'full metal jacket' in low or 'a/c/' in low or 'acc' in low:
         return 'hybrid'
@@ -421,6 +458,17 @@ HEADER = '''/**
  */
 
 import type { ShaftSpec } from './spineData'
+
+export interface RetailShaftSpec extends ShaftSpec {
+  /**
+   * Производитель называет древко бочкообразным или конусным: X10, A/C/E,
+   * Maxima RED. Процент, на который у таких древков снимается статический
+   * спайн, нигде не печатается, поэтому focComp у них остаётся нулевым,
+   * а экран подбора об этом предупреждает. Отсутствие флага не означает,
+   * что трубка параллельная: значит, на странице об этом не сказано.
+   */
+  barreled: boolean
+}
 '''
 
 
@@ -451,9 +499,11 @@ def main():
         if problems:
             partial.append(f'{title}: {problems[0]}')
             continue
-        material = material_of(title, brand, rows)
+        lines = bullets(page)
+        material = material_of(title, brand, rows, lines)
         series = clean_series(title, brand, [r['size'] for r in rows])
         series = naming.setdefault(series_key(brand, series), series)
+        barreled = barreled_by(title, lines)
         added = 0
         for r in rows:
             key = (brand, series, r['size'])
@@ -463,7 +513,8 @@ def main():
             shafts.append({'material': material, 'brand': brand or '—', 'series': series,
                            'size': r['size'], 'deflection': r['deflection'], 'gpi': r['gpi'],
                            'od': r['od'], 'focComp': 0, 'stockLength': r['length'],
-                           'insert': None, 'insertGrains': None, 'nock': None})
+                           'insert': None, 'insertGrains': None, 'nock': None,
+                           'barreled': barreled})
             added += 1
         if added:
             complete.append(f'{brand} / {series}: {added}')
@@ -473,7 +524,7 @@ def main():
     body = ',\n'.join('  ' + json.dumps(s, ensure_ascii=False, separators=(', ', ': '))
                       for s in shafts)
     out = Path('src/core/spineDataRetail.ts')
-    out.write_text(f'{HEADER}\nexport const RETAIL_SHAFTS: ShaftSpec[] = [\n{body},\n]\n',
+    out.write_text(f'{HEADER}\nexport const RETAIL_SHAFTS: RetailShaftSpec[] = [\n{body},\n]\n',
                    encoding='utf-8')
 
     print(f'\nполных карточек: {len(complete)}, древков: {len(shafts)}')
