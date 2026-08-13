@@ -36,8 +36,29 @@ export const SHAFT_SOURCES: Record<ShaftSource, { label: string; url: string }> 
 const tag = (rows: ShaftSpec[], source: ShaftSource): Shaft[] =>
   rows.map((r) => ({ ...r, source }))
 
-export const ALL_SHAFTS: Shaft[] = [
-  ...tag(SHAFTS, 'stu'),
-  ...tag(SKYLON_SHAFTS, 'skylon'),
-  ...tag(RETAIL_SHAFTS, 'retail'),
-]
+/**
+ * Источники идут от старого к новому, и при совпадении ключа
+ * «производитель / серия / размер» побеждает более поздний.
+ *
+ * Совпадений мало и они двух видов. Gold Tip Velocity 300 — то же древко, что
+ * и в 2012-м, производитель за годы уточнил вес и диаметр на пару сотых:
+ * свежая цифра лучше старой. Carbon Express Mach 5 250 — уже другое древко под
+ * тем же именем: у Стю это старый размерный код со спайном .404, в нынешнем
+ * каталоге — спайн .250. Показывать обе строки нельзя, они неразличимы в
+ * списке; берём ту, которую сегодня можно купить. Ни в одной серии при этом
+ * ничего не теряется: у ритейлера все размеры старой записи есть, и сверх них
+ * ещё несколько.
+ */
+const merge = (...lists: Shaft[][]): Shaft[] => {
+  const byKey = new Map<string, Shaft>()
+  for (const list of lists) {
+    for (const s of list) byKey.set(`${s.brand}|${s.series}|${s.size}`, s)
+  }
+  return [...byKey.values()]
+}
+
+export const ALL_SHAFTS: Shaft[] = merge(
+  tag(SHAFTS, 'stu'),
+  tag(SKYLON_SHAFTS, 'skylon'),
+  tag(RETAIL_SHAFTS, 'retail'),
+)
